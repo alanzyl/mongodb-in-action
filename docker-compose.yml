@@ -9,3 +9,5 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: password
     volumes:
       - /tmp/mongodb:/data/db
+    ports:
+      - "27017:27017"
