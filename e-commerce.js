@@ -156,7 +156,7 @@ let review = {
   "rating" : 4,
   "user_id" : ObjectId("4c4b1476238d3b4dd5000042"),
   "username" : "dgreenthumb",   // denormalized user information
-  "helpful_votes" : 3,
+  "helpful_votes" : 3,    // cached size, cause size doesn't use an index
   "voter_ids" : [
     ObjectId("4c4b1476238d3b4dd5000033"),
     ObjectId("7a4f0376238d3b4dd5000003"),
@@ -165,3 +165,108 @@ let review = {
 }
 
 db.reviews.insert(review)
+
+
+// Products, categories, and reviews
+
+product = db.products.findOne({ "slug": "wheelbarrow-9092" })
+db.categories.findOne({ "_id": product["primary_category"] })
+db.reviews.find({ "product_id": product["_id"] }).pretty()
+
+
+// SKIP, LIMIT, ANDSORTQUERYOPTIONS
+
+db.reviews.find({ "product_id": product["_id"] }).skip(0).limit(12)
+db.reviews.find({ "product_id": product["_id"] }).sort({ "helpful_votes": -1 }).limit(12)
+
+page_number = 1
+product = db.products.findOne({ "slug": "wheelbarrow-9092" })
+category = db.categories.findOne({ "_id": product["primary_category"] })
+reviews_count = db.reviews.count({ "product_id": product_id })
+reviews = db.reviews.find({ "product_id": product["_id"] })
+            .skip( (page_number - 1) * 12)
+            .limit(12)
+            .sort({ "helpful_votes": -1 })
+
+
+// PRODUCT LISTING PAGE
+
+page_number = 1
+category = db.categories.findOne({ "slug": "gardening-tools" })
+siblings = db.categories.find({ "parent_id": category["_id"] })
+products = db.products.find({ "category_ids": category["_id"] })
+              .skip( (page_number - 1) * 12 )
+              .limit(12)
+              .sort({ "average_review": -1 })
+
+categories = db.categories.find({ "parent_id": null })
+
+
+// Users and orders
+
+db.users.findOne({ "username": "kbanker",
+                   "hashed_password": "bd1cfa194c3a603e7186780824b04419" },
+                   { "_id": 1 })
+
+
+// PARTIAL MATCH QUERIES IN USERS
+
+db.users.find({ "last_name": /^Ba/ })   // RE
+
+
+// QUERYING SPECIFIC RANGES
+
+db.users.find({ "addresses.zip": { $gt: 10019, $lt: 10040} })
+
+
+// SELECTOR MATCHING
+
+db.users.find({ "first_name": "Smith", birth_year: 1975 })
+
+
+// RANGES
+
+db.users.find({ "birth_year": {$gt: 1985, $lt: 2015} })
+
+
+// ARAYS
+
+db.products.find({ "tags": "soil" })
+db.products.find({ "tags.0": "soil" })
+
+db.users.find({ "addresses.state":  "NY", "addresses.name": "home"}) // wrong
+db.users.find({ "addresses": {  $elemMatch: { "state": "NY", "name": "home" } } })
+
+db.users.find({ "addresses": { $size: 3 } })
+
+
+// REGULAR EXPRESSIONS
+
+db.reviews.find({ "user_id": ObjectId("4c4b1476238d3b4dd5000001"), "text": /best|worst/i})  // i prevents an index
+db.reviews.find({ "user_id": ObjectId("4c4b1476238d3b4dd5000001"),
+                  "text": {
+                    $regex: "best|worst",
+                    $options: "i",
+                  }
+                })
+
+
+// MISCELLANEOUS QUERY OPERATORS
+
+db.orders.find({ "sub_total": { $mod: [3, 0] } })   // sub_total is divisible by 3; $mod doesn't use an index
+
+
+// PROJECTIONS
+
+db.users.find({}, { "username": 1 })
+
+db.products.find({}, { "reviews": { $slice: 12 } })   // for arrays
+db.products.find({}, { "reviews": { $slice: [24, 12] } })    // for arrays
+db.products.find({}, { "reviews": { $slice: [24, 12] }, "reviews.rating": 1 })    // will return only rating
+
+
+// SORTING
+
+db.reviews.find({}).sort({ "rating": -1 })
+
+
