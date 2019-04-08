@@ -90,3 +90,31 @@ db.reviews.aggregate([
         "avg_helpful": {$avg: "$helpful_votes"},
     } }
 ])
+
+
+// SUMMARIZING SALES BY YEAR AND MONTH
+
+db.orders.aggregate([
+    { $match: { "purchase_date": { $gt: new Date(2010, 0, 1) } } },
+    { $group: {
+        "_id": { "year": { $year: "$purchase_date" },
+                 "month": { $month: "$purchase_date" } },
+        "count": { $sum: 1 },
+        "total": { $sum: "$sub_total" },
+    } },
+    { $sort: { "_id": -1 } }
+])
+
+upperManhattanOrders = { "shipping_address.zip": {$gte: 10019, $lt: 10040} }
+sumByUserId = { "_id": "$user_id",
+                "total": { $sum: "$sub_total" } }
+orderTotalLarge = { "total": { $gt: 10000 } }
+sortTotalDesc = { "total": -1 }
+
+db.orders.aggregate([
+    { $match: upperManhattanOrders },
+    { $group: sumByUserId },
+    { $match: orderTotalLarge},
+    { $sort: sortTotalDesc },
+    { $out: "targetedCustomers" },
+])

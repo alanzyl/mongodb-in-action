@@ -78,6 +78,7 @@ db.categories.find({ "_id": { $in: product['category_ids'] } }).pretty()
 let order = {
   "_id" : ObjectId("6a5b1476238d3b4dd5000048"),
   "user_id" : ObjectId("4c4b1476238d3b4dd5000001"),
+  "purchase_date": new Date(2016, 0, 1),
   "state" : "CART",
   "line_items" : [    // denormalized products information
     {
