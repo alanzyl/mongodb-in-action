@@ -90,3 +90,44 @@ db.reviews.aggregate([
         "avg_helpful": {$avg: "$helpful_votes"},
     } }
 ])
+
+
+// $project
+
+db.users.aggregate([
+    { $match: { "username": "kbanker",
+                "hashed_password": "bd1cfa194c3a603e7186780824b04419" } },
+    { $project: { "first_name": 1, "last_name": 1 } }
+])
+
+
+// $group
+
+db.orders.aggregate([
+    { $project: { "user_id": 1, "line_items": 1 } },
+    { $unwind: "$line_items" },
+    { $group: { "_id": {"user_id": "$user_id"},
+        purchasedItems: { $push: "$line_items" }
+    } }
+]).toArray()
+
+
+// $match, $sort, $skip, $limit
+
+page_number = 1
+product = db.products.findOne({'slug': 'wheelbarrow-9092'})
+db.reviews.aggregate([
+    { $match: { 'product_id': product['_id'] } },
+    { $skip: (page_number - 1) * 12 },
+    { $limit: 12 },
+    { $sort: { "helpful_votes": -1 } }
+]).toArray()
+
+
+// $unwind
+
+db.products.aggregate([
+    { $project: { "category_ids": 1 } },
+    { $unwind: "$category_ids" },
+    { $limit: 2 }
+])
