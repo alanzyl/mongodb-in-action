@@ -92,6 +92,34 @@ db.reviews.aggregate([
 ])
 
 
+// SUMMARIZING SALES BY YEAR AND MONTH
+
+db.orders.aggregate([
+    { $match: { "purchase_date": { $gt: new Date(2010, 0, 1) } } },
+    { $group: {
+        "_id": { "year": { $year: "$purchase_date" },
+                 "month": { $month: "$purchase_date" } },
+        "count": { $sum: 1 },
+        "total": { $sum: "$sub_total" },
+    } },
+    { $sort: { "_id": -1 } }
+])
+
+upperManhattanOrders = { "shipping_address.zip": {$gte: 10019, $lt: 10040} }
+sumByUserId = { "_id": "$user_id",
+                "total": { $sum: "$sub_total" } }
+orderTotalLarge = { "total": { $gt: 10000 } }
+sortTotalDesc = { "total": -1 }
+
+db.orders.aggregate([
+    { $match: upperManhattanOrders },
+    { $group: sumByUserId },
+    { $match: orderTotalLarge},
+    { $sort: sortTotalDesc },
+    { $out: "targetedCustomers" },
+])
+
+
 // $project
 
 db.users.aggregate([
@@ -130,4 +158,37 @@ db.products.aggregate([
     { $project: { "category_ids": 1 } },
     { $unwind: "$category_ids" },
     { $limit: 2 }
+
+
+// Reshaping documents
+
+db.users.aggregate([
+    { $match: { "username": "kbanker" } },
+    { $project: { "name": {"first": "$first_name",
+                           "last": "$last_name"} } }
+])
+
+
+// String functions
+
+db.users.aggregate([
+    { $match: { "username": "kbanker" } },
+    { $project:
+        { "name": { $concat: ["$first_name", " ", "$last_name"] },
+          "firstInitial": { $substr: ["$first_name", 0, 1] },
+          "usernameUpperCase": { $toUpper: "$username" } },
+    },
+])
+
+
+// Set Operators
+
+testSet1 = ["tools"]
+db.products.aggregate([
+    { $project:
+        { "productName": "$name",
+          "tags": 1,
+          "setUnion": { $setUnion: ["$tags", testSet1] }
+        }
+    }
 ])
