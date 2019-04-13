@@ -118,3 +118,12 @@ db.categories.update( { "ancestors.id": outdoors_id}, { $set: { "ancestors.$": d
 // the positional operator
 db.users.update( { "_id": ObjectId("4c4b1476238d3b4dd5000001"), "addresses.name": "work" },
                  { $set: { "addresses.$.street": "155 E 31st St." } } )
+
+
+// Reviews
+
+query_selector = { "_id": ObjectId("4c4b1476238d3b4dd5000041"),
+                   "voter_ids": { $ne: ObjectId("4c4b1476238d3b4dd5000001") } }
+db.reviews.update( query_selector,
+                   { $push: { "voter_ids": ObjectId("4c4b1476238d3b4dd5000001") },
+                     $inc: { "helpful_votes": 1 } } )
