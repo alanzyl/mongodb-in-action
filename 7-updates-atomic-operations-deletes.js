@@ -1,4 +1,4 @@
-use e - commerce
+use e-commerce
 
 {
   _id: ObjectId("4c4b1476238d3b4dd5000001"),
@@ -127,3 +127,99 @@ query_selector = { "_id": ObjectId("4c4b1476238d3b4dd5000041"),
 db.reviews.update( query_selector,
                    { $push: { "voter_ids": ObjectId("4c4b1476238d3b4dd5000001") },
                      $inc: { "helpful_votes": 1 } } )
+
+
+// Orders
+
+cart_item = {
+  _id:  ObjectId("4c4b1476238d3b4dd5003981"),
+  slug: "wheel-barrow-9092",
+  sku:  "9092",
+  name: "Extra Large Wheel Barrow",
+  pricing: {
+    retail: 5897,
+    sale:   4897
+  }
+}
+
+selector = {
+  user_id: ObjectId("4c4b1476238d3b4dd5000001"),
+  state: 'CART',
+  "line_items._id": { "$ne": cart_item._id }
+}
+update = {
+  $inc: { "sub_total": cart_item["pricing"]["sale"] }
+}
+db.orders.update(selector, update, { "upsert": true })
+
+selector = {
+  "user_id": ObjectId("4c4b1476238d3b4dd5000001"),
+  "state": 'CART',
+  "line_items._id": { "$ne": cart_item._id }
+}
+update = { "$push": { "line_items": cart_item } }
+db.orders.update(selector, update)
+
+// ANOTHER UPDATE FOR QUANTITIES
+selector = {
+  "user_id": ObjectId("4c4b1476238d3b4dd5000001"),
+  "state": 'CART',
+  "line_items._id": cart_item._id
+}
+update = {
+  "$inc": {
+    "line_items.$.quantity": 1
+  }
+}
+db.orders.update(selector, update)
+
+
+// Order state transitions
+
+// PREPARE THE ORDER FOR CHECKOUT
+newDoc = db.orders.findAndModify({
+  "query": {
+    "user_id": ObjectId("4c4b1476238d3b4dd5000001"),
+    "state": "CART",
+  },
+  "update": {
+    "$set": {
+      "state": "PRE-AUTHORIZE"
+    }
+  },
+  "new": true,
+})
+
+// VERIFY THE ORDER AND AUTHORIZE
+oldDoc = db.orders.findAndModify({
+  "query": {
+    "user_id": ObjectId("4c4b1476238d3b4dd5000001"),
+    "sub_total": 11093,   // here verification
+    "state": "PRE-AUTHORIZE"
+  },
+  "update": {
+    "$set": {
+      "state": "AUTHORIZING"
+    }
+  }
+})
+
+// FINISHING THE ORDER
+auth_doc = {
+  "ts": new Date(),
+  "cc": 3432003948293040,
+  "id": 2923838291029384483949348,
+  "gateway": "Authorize.net"
+}
+db.orders.findAndModify({
+  "query": {
+    "user_id": ObjectId("4c4b1476238d3b4dd5000001"),
+    "state": "AUTHORIZING",
+  },
+  "update": {
+    "$set": {
+      "state": "PRE-SHIPPING",
+      "authorization": auth_doc,
+    }
+  }
+})
