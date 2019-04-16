@@ -3,13 +3,8 @@ import pprint
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 
-from .inventory_fetcher import InventoryFetcher
+from inventory_fetcher import InventoryFetcher
 
-
-AVAILABLE = 0
-IN_CART = 1
-PRE_ORDER = 2
-PURCHASED = 3
 
 # Connection
 client = MongoClient('mongodb://root:password@localhost:27017/', tz_aware=True)
@@ -20,15 +15,15 @@ inventory = e_commerce_db['inventory']
 for i in range(3):
     inventory.insert_one({
         'sku': 'shovel',
-        'state': AVAILABLE,
+        'state': InventoryFetcher.AVAILABLE,
     })
     inventory.insert_one({
         'sku': 'rake',
-        'state': AVAILABLE,
+        'state': InventoryFetcher.AVAILABLE,
     })
     inventory.insert_one({
         'sku': 'clippers',
-        'state': AVAILABLE,
+        'state': InventoryFetcher.AVAILABLE,
     })
 
 
@@ -41,8 +36,8 @@ orders.insert_one({
     'item_ids': []
 })
 
-inventory_fetcher = InvetoryFetcher(orders=orders,
-                                    inventory=inventory)
+inventory_fetcher = InventoryFetcher(orders=orders,
+                                     inventory=inventory)
 inventory_fetcher.add_to_cart(order_id,
                               [
                                   {'sku': 'shovel', 'quantity': 3},
