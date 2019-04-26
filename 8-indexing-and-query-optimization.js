@@ -27,3 +27,9 @@ db.values.createIndex({"open": 1, "close": 1}, {"background": true})
 
 // DEFRAGMENTING
 db.values.reIndex()
+
+// USING THE PROFILER
+
+use stocks
+db.setProfilingLevel(2)
+db.system.profile.find().sort({$natural: -1}).limit(5).pretty()
