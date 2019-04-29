@@ -11,5 +11,6 @@ services:
       - /tmp/mongodb:/data/db
       - ./7-3-2-inventory-management:/inventory-management
       - ./3-3-building-simple-application:/building-simple-application
+      - ./datasets:/datasets
     ports:
       - "27017:27017"
