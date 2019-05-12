@@ -1,0 +1,30 @@
+version: '3.1'
+
+services:
+  mongo-primary:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+    command: "mongod --replSet myapp --keyFile secure.keyFile --port 40000"
+  mongo-secondary:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+    command: "mongod --replSet myapp --keyFile secure.keyFile --port 40001"
+  mongo-arbiter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+    command: "mongod --replSet myapp --keyFile secure.keyFile --port 40002"
